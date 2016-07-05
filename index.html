@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title>Translate example</title>
+	<script   src="https://code.jquery.com/jquery-2.2.4.min.js"   integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="   crossorigin="anonymous"></script>  
+</head>
+ <style>
+ .container {
+ 	margin: 10px auto;
+ 	width: 300px;
+ }
+ textarea {
+ 	float: left;
+ 	width: 300px;
+ 	height: 100px;
+ }
+ </style>
+ <script>
+$(document).ready(function() {
+ 	$("button").click(function() {
+		var text = $("#srcText").val();
+		var src = $("#srcLang").val();
+		var dst = $("#dstLang").val();
+
+		if (text != "") {
+			authorize(src, dst, text);
+		}
+	});
+ });
+
+function authorize(src, dst, text) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("POST", "auth.php", true);
+	xhr.responseType = 'json';
+
+	xhr.onload = function () {
+		if (xhr.readyState == 4) {
+			if (xhr.status === 200) {
+				translate(src, dst, text, xhr.response.access_token);
+			}
+		}
+	};
+	xhr.onerror = function () {
+		console.log("認証に失敗しました。");
+	};
+
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhr.send();
+}
+
+function translate(src, dst, text, token) {
+	var params = ['token=' + encodeURIComponent(token),
+		'&text=' + encodeURIComponent(text),
+		'&src=' + src,
+		'&dst=' + dst
+	].join("");
+
+	var xhr = new XMLHttpRequest();
+	xhr.open('GET', 'translate.php?' + params, true);
+
+	xhr.onload = function () {
+		if (xhr.readyState == 4) {
+			if (xhr.status === 200) {
+				var xml = $.parseXML(xhr.response);
+				$("#dstText").val($(xml).text());
+			}
+			else {
+				showErrorMessage("翻訳に失敗しました。");
+			}
+		}
+	};
+	xhr.onerror = function () {
+		showErrorMessage("翻訳に失敗しました。");
+	};
+
+	xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+	xhr.send();
+}
+</script>
+<body>
+	<div class="container">
+		<textarea id="srcText"></textarea>
+		<div style="clear: both;"></div>
+		<div style="float: left; height:36px; line-height:36px;">
+			<select id="srcLang">
+				<option value="ja" selected>日本語</option>
+				<option value="zh">中国語</option>
+				<option value="en">英語</option>
+				<option value="fr">フランス語</option>
+				<option value="de">ドイツ語</option>
+				<option value="it">イタリア語</option>
+				<option value="es">スペイン語</option>
+			</select>
+			<select id="dstLang">
+				<option value="ja">日本語</option>
+				<option value="zh">中国語</option>
+				<option value="en" selected>英語</option>
+				<option value="fr">フランス語</option>
+				<option value="de">ドイツ語</option>
+				<option value="it">イタリア語</option>
+				<option value="es">スペイン語</option>
+			</select>
+			<button>実行</button>
+		</div>
+		<div style="clear: both;"></div>
+		<textarea id="dstText" style="float: left;"></textarea>	
+	</div>
+</body>
+</html>
